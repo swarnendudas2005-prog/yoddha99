@@ -1,7 +1,7 @@
-streamlit
-deep-translator
 flask
 flask_sqlalchemy
 flask_login
 twilio
 pandas
+deep-translator
+gunicorn
