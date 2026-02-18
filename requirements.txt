@@ -1,6 +1,7 @@
-Flask
-Flask-SQLAlchemy
-Flask-Login
-pandas
-numpy
+streamlit
+googletrans==4.0.0-rc1
+flask
+flask_sqlalchemy
+flask_login
 twilio
+pandas
