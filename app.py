@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from datetime import datetime
-# --- CHANGED: Switched to deep_translator ---
 from deep_translator import GoogleTranslator
 from twilio.rest import Client
 from werkzeug.utils import secure_filename
@@ -29,8 +28,6 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
-
-# Note: We don't need a global translator instance anymore with deep_translator
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -113,17 +110,16 @@ class DemandForecaster:
 
 forecaster = DemandForecaster()
 
-# --- TRANSLATION (UPDATED FOR DEEP_TRANSLATOR) ---
+# --- TRANSLATION ---
 @app.context_processor
 def inject_translator():
     def translate_text(text):
         try:
             dest_lang = session.get('lang', 'en')
             if dest_lang == 'en': return text
-            # CHANGED: Using GoogleTranslator from deep_translator
             return GoogleTranslator(source='auto', target=dest_lang).translate(text)
         except Exception as e:
-            print(f"Translation error: {e}")
+            print(f"Translation Error: {e}")
             return text
     return dict(translate=translate_text)
 
@@ -383,7 +379,6 @@ if __name__ == '__main__':
         db.create_all()
         
         # --- HARDCODED ADMIN ACCOUNT CREATION ---
-        # This checks if the master admin account exists. If not, it creates it permanently!
         admin_user = User.query.filter_by(username='Subhajit Rudra').first()
         if not admin_user:
             new_admin = User(
@@ -396,4 +391,7 @@ if __name__ == '__main__':
             db.session.commit()
             print("Master Admin Account 'Subhajit Rudra' successfully generated.")
             
-    app.run(debug=True)
+    # --- FIXED: Use generic host and NO debug mode for Streamlit Cloud compatibility ---
+    # This prevents the "signal only works in main thread" error.
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
