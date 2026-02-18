@@ -2,7 +2,8 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from datetime import datetime
-from googletrans import Translator
+# --- CHANGED: Switched to deep_translator ---
+from deep_translator import GoogleTranslator
 from twilio.rest import Client
 from werkzeug.utils import secure_filename
 import pandas as pd
@@ -28,7 +29,8 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
-translator = Translator()
+
+# Note: We don't need a global translator instance anymore with deep_translator
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -111,15 +113,18 @@ class DemandForecaster:
 
 forecaster = DemandForecaster()
 
-# --- TRANSLATION ---
+# --- TRANSLATION (UPDATED FOR DEEP_TRANSLATOR) ---
 @app.context_processor
 def inject_translator():
     def translate_text(text):
         try:
             dest_lang = session.get('lang', 'en')
             if dest_lang == 'en': return text
-            return translator.translate(text, dest=dest_lang).text
-        except: return text
+            # CHANGED: Using GoogleTranslator from deep_translator
+            return GoogleTranslator(source='auto', target=dest_lang).translate(text)
+        except Exception as e:
+            print(f"Translation error: {e}")
+            return text
     return dict(translate=translate_text)
 
 @app.route('/set_language/<lang_code>')
